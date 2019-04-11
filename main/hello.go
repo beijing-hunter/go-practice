@@ -76,4 +76,15 @@ func main() {
 	for index, value := range slices {
 		fmt.Println("index=", index, ",value=", value)
 	}
+
+	dataMap := map[string]string{"key1": "name"}
+	dataMap["key2"] = "sex"
+	fmt.Println("dataMap=", dataMap)
+
+	dataMap2 := make(map[string]string)
+	dataMap2["key1"] = "hello world"
+	dataMap2["key2"] = "hello world2"
+	delete(dataMap2, "key1")
+	fmt.Println("dataMap2=", dataMap2)
+
 }

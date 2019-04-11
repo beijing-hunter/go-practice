@@ -35,4 +35,8 @@ func main() {
 	slice2 = append(slice2, 12.3) //附加
 	fmt.Println(slice2)
 	fmt.Printf("slice2 type=%T\n", slice2)
+
+	var slice4 = make([]int, 1)
+	count := copy(slice4, slice) //由于slice4的长度为1，所以只能从slice中拷贝一个元素
+	fmt.Printf("拷贝个数：count=%v,slice4=%v,slice4容量=%v\n", count, slice4, cap(slice4))
 }

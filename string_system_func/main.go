@@ -24,7 +24,7 @@ func main() {
 	}
 
 	var bytes = []byte("hello go go")
-	strValue = string(bytes) //将byte数组转换成string
+	strValue = string(bytes) //将byte切片转换成string
 	fmt.Println(strValue)
 
 	isExist := strings.Contains(strValue, "go") //区分大小写，是否包含某个字符串
@@ -46,4 +46,7 @@ func main() {
 	fmt.Println(strings.TrimSpace(strValue))  //去掉左右两边的空格
 	fmt.Println(strings.Trim(strValue, "!"))  //去掉左右两边的!
 	fmt.Println(strings.Trim(strValue, " !")) //去掉左右两边的!和空格
+
+	sliceStr := strings.Split("beijing@sougo.com", "@") //返回类型是一个切片
+	fmt.Printf("sliceStr type=%T,value=%v\n", sliceStr, sliceStr)
 }
