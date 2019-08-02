@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func main() {
+func main1() {
 	fmt.Println("hello,world!")
 
 	var strValue = "123.2353"
