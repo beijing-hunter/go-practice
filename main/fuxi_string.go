@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-func main() {
+func main1() {
 
 	str := "hello" + "world" +
 		"go"
