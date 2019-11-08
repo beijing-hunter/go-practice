@@ -143,7 +143,7 @@ func loginValidateFilter(handle http.HandlerFunc) http.HandlerFunc {
 func main() {
 
 	server := http.Server{
-		Addr: "123.56.4.34:8487",
+		Addr: "127.0.0.1:8080",
 	}
 
 	http.HandleFunc("/user/login", login)
