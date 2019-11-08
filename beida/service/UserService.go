@@ -11,16 +11,18 @@ var (
 	saltPfix = "sfeajofwefjwei"
 )
 
-type Student struct {
+type User struct {
 	Name     string
 	Password string
 	Salt     string
 	Uuid     string
 }
 
-func FindInfo(name string) (datas []Student) {
+type UserService struct{}
 
-	rows, err := dbp.Db.Query("select name,password,salt,uuid from student where name=?", name)
+func (s *UserService) FindInfo(name string) (datas []User) {
+
+	rows, err := dbp.Db.Query("select name,password,salt,uuid from suser where name=?", name)
 
 	if err != nil {
 		panic(err)
@@ -29,7 +31,7 @@ func FindInfo(name string) (datas []Student) {
 
 	for rows.Next() {
 
-		stu := Student{}
+		stu := User{}
 		err = rows.Scan(&stu.Name, &stu.Password, &stu.Salt, &stu.Uuid)
 
 		if err != nil {
@@ -43,10 +45,10 @@ func FindInfo(name string) (datas []Student) {
 	return
 }
 
-func AddInfo(stu Student) (result bool) {
+func (s *UserService) AddInfo(stu User) (result bool) {
 
 	result = false
-	datas := FindInfo(stu.Name)
+	datas := s.FindInfo(stu.Name)
 
 	if len(datas) > 0 {
 		return
@@ -57,8 +59,9 @@ func AddInfo(stu Student) (result bool) {
 	stu.Password = utils.Md5V(stu.Password + saltPfix)
 	stu.Salt = saltPfix
 
-	sql := "insert into student(name,password,salt,uuid) values (?,?,?,?)"
+	sql := "insert into suser(name,password,salt,uuid) values (?,?,?,?)"
 	stmt, err := dbp.Db.Prepare(sql)
+	defer stmt.Close()
 
 	if err != nil {
 		panic(err)
@@ -68,13 +71,13 @@ func AddInfo(stu Student) (result bool) {
 	stmt.QueryRow(stu.Name, stu.Password, stu.Salt, stu.Uuid)
 	result = true
 
-	defer stmt.Close()
-	return result
+	return
 }
 
-func Login(name string, password string) (datas []Student) {
+func (s *UserService) Login(name string, password string) (datas []User) {
 
-	rows, err := dbp.Db.Query("select name,password,salt,uuid from student where name=? and password=?", name, password)
+	password = utils.Md5V(password + saltPfix)
+	rows, err := dbp.Db.Query("select name,password,salt,uuid from suser where name=? and password=?", name, password)
 	defer rows.Close()
 
 	if err != nil {
@@ -83,7 +86,7 @@ func Login(name string, password string) (datas []Student) {
 
 	for rows.Next() {
 
-		stu := Student{}
+		stu := User{}
 		err = rows.Scan(&stu.Name, &stu.Password, &stu.Salt, &stu.Uuid)
 
 		if err != nil {
@@ -96,9 +99,9 @@ func Login(name string, password string) (datas []Student) {
 	return
 }
 
-func updatePassword(uuid string, password string) {
+func (s *UserService) UpdatePassword(uuid string, password string) {
 
 	password = utils.Md5V(password + saltPfix)
 	salt := saltPfix
-	dbp.Db.Exec("update student set password=?,salt=? where uuid=?", password, salt, uuid)
+	dbp.Db.Exec("update suser set password=?,salt=? where uuid=?", password, salt, uuid)
 }
