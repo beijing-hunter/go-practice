@@ -40,7 +40,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	apiresult := ApiResult{StatusCode: 0, Result: datas[0].Uuid}
 	jsonByte, _ := json.Marshal(apiresult)
 
-	fmt.Fprintf(w, string(jsonByte))
+	setJSONRespone(jsonByte, &w)
 }
 
 func addUser(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +58,7 @@ func addUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonByte, _ := json.Marshal(apiresult)
-	fmt.Fprintf(w, string(jsonByte))
+	setJSONRespone(jsonByte, &w)
 }
 
 func updatePassword(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +69,7 @@ func updatePassword(w http.ResponseWriter, r *http.Request) {
 
 	apiresult := ApiResult{StatusCode: 0, Result: "修改成功"}
 	jsonByte, _ := json.Marshal(apiresult)
-	fmt.Fprintf(w, string(jsonByte))
+	setJSONRespone(jsonByte, &w)
 }
 
 func findSchoolInfos(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +84,7 @@ func findSchoolInfos(w http.ResponseWriter, r *http.Request) {
 
 	apiresult := ApiResult{StatusCode: 0, Result: datas}
 	jsonByte, _ := json.Marshal(apiresult)
-	fmt.Fprintf(w, string(jsonByte))
+	setJSONRespone(jsonByte, &w)
 }
 
 func addSchool(w http.ResponseWriter, r *http.Request) {
@@ -104,7 +104,7 @@ func addSchool(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonByte, _ := json.Marshal(apiresult)
-	fmt.Fprintf(w, string(jsonByte))
+	setJSONRespone(jsonByte, &w)
 }
 
 func delSchool(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +114,13 @@ func delSchool(w http.ResponseWriter, r *http.Request) {
 
 	apiresult := ApiResult{StatusCode: 0, Result: "删除成功"}
 	jsonByte, _ := json.Marshal(apiresult)
-	fmt.Fprintf(w, string(jsonByte))
+	setJSONRespone(jsonByte, &w)
+}
+
+func setJSONRespone(dataByte []byte, w *http.ResponseWriter) {
+
+	(*w).Header().Set("Content-Type", "application/json")
+	(*w).Write(dataByte)
 }
 
 func loginValidateFilter(handle http.HandlerFunc) http.HandlerFunc {
@@ -153,6 +159,10 @@ func main() {
 	http.HandleFunc("/school/finds", findSchoolInfos)
 	http.HandleFunc("/school/add", loginValidateFilter(addSchool))
 	http.HandleFunc("/school/del", loginValidateFilter(delSchool))
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "hello world!")
+	})
 
 	server.ListenAndServe()
 
