@@ -8,9 +8,9 @@ import (
 
 var (
 	dbusername = "root"
-	dbpassword = "cmt123"
-	dbhostip   = "123.56.4.34:3306"
-	dbname     = "cmt_media_20190813"
+	dbpassword = "12234"
+	dbhostip   = "123.56.24.34:3306"
+	dbname     = "db20190813"
 	Db         *sql.DB
 )
 
