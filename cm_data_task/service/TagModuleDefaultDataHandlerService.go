@@ -3,6 +3,7 @@ package service
 import (
 	"cm_data_task/entitys"
 	"cm_data_task/utils"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -43,6 +44,7 @@ func (service TagModuleDefaultDataHandlerService) DefaultDataCollect() {
 func (service TagModuleDefaultDataHandlerService) singleUserDefaultDataCollect(userId int64, moduleInfo entitys.HomepageInfo, categoryInfo entitys.CategoryInfo, tagIds []string) {
 
 	categoryIds := strings.Split(categoryInfo.CategoryIdStr, ",")
+	dataCollectResultMap := make(map[int64]entitys.LiveDataCollectResult, 300)
 
 	for _, categoryIdS := range categoryIds {
 
@@ -51,13 +53,12 @@ func (service TagModuleDefaultDataHandlerService) singleUserDefaultDataCollect(u
 		for _, tagIdS := range tagIds {
 
 			tagId, _ := strconv.ParseInt(tagIdS, 10, 64)
-			liveOrderfinalDatas := hdao.FindLiveOrderfinalInfos(moduleInfo.Id, categoryId, tagId)
+			liveKey := strconv.FormatInt(moduleInfo.Id, 10) + strconv.FormatInt(categoryId, 10) + strconv.FormatInt(tagId, 10)
+			liveOrderfinalDatas := liveOrderfinalCache.GetValue(liveKey)
 
 			if len(liveOrderfinalDatas) == 0 {
 				utils.InfoLogger.Printf("标签模块默认数据处理-学科与标签下没有获取到课程:moduleId=%v,categoryId=%v,tagId=%v\n", moduleInfo.Id, categoryId, tagId)
 			} else {
-
-				var dataResults []entitys.LiveDataCollectResult
 
 				for _, liveOrderfinalInfo := range liveOrderfinalDatas {
 
@@ -73,19 +74,39 @@ func (service TagModuleDefaultDataHandlerService) singleUserDefaultDataCollect(u
 						Orderfinal: resultValue,
 					}
 					result.Livetype, _ = strconv.ParseInt(liveOrderfinalInfo.Livetype, 10, 64)
+					liveOrderfinalInfoValue, ok := dataCollectResultMap[liveOrderfinalInfo.LiveId]
 
-					dataResults = append(dataResults, result)
+					if !ok {
+						dataCollectResultMap[liveOrderfinalInfo.LiveId] = result
+					} else {
+
+						if liveOrderfinalInfoValue.Orderfinal < result.Orderfinal {
+							liveOrderfinalInfoValue.Orderfinal = result.Orderfinal
+							dataCollectResultMap[liveOrderfinalInfo.LiveId] = liveOrderfinalInfoValue
+						}
+					}
 				}
-
-				hdao.AddCollectResult(dataResults)
 			}
 		}
 	}
 
+	var resultSort LiveDataCollectResultSort
+
+	if len(dataCollectResultMap) > 0 {
+
+		for _, value := range dataCollectResultMap {
+
+			resultSort = append(resultSort, value)
+		}
+
+		sort.Sort(resultSort)
+	}
+
 	notifyInfo := entitys.DataCollectNotifyInfo{
-		UserId:        userId,
-		ModuleId:      moduleInfo.Id,
-		CategroyIdStr: categoryInfo.CategoryIdStr,
+		UserId:            userId,
+		ModuleId:          moduleInfo.Id,
+		CategroyIdStr:     categoryInfo.CategoryIdStr,
+		CollectResultData: resultSort,
 	}
 
 	DataCollectChan <- notifyInfo

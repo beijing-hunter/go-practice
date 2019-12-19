@@ -1,9 +1,23 @@
 package main
 
-import "fmt"
+import (
+	"flag"
+	"fmt"
+)
+
+var (
+	handlerfuc = ""
+)
+
+func init() { //命令行传参接收：如：go run main.go -handlerfuc func
+	flag.StringVar(&handlerfuc, "handlerfuc", "defaultfunc", "需要执行那个处理函数")
+}
 
 func main() {
 
+	flag.Parse() //暂停获取参数
+
+	fmt.Println("handlerfuc=", handlerfuc)
 	var name string
 	var age byte
 

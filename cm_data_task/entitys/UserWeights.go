@@ -13,7 +13,8 @@ type UserTagWeights struct {
 }
 
 type DataCollectNotifyInfo struct {
-	UserId        int64
-	CategroyIdStr string
-	ModuleId      int64
+	UserId            int64
+	CategroyIdStr     string
+	ModuleId          int64
+	CollectResultData interface{}
 }

@@ -35,6 +35,30 @@ func (guess GuessLikeModuleDataDao) FindUserId() (datas []int64) {
 	return
 }
 
+func (guess GuessLikeModuleDataDao) FindUserIdTest() (datas []int64) {
+
+	sql := "select DISTINCT d.userid " +
+		"from ods_cm_event_course_play_view_day d where d.userid in (2538963)"
+
+	rows, err := utils.Db.Query(sql)
+	defer utils.ErrorCatch()
+	defer rows.Close()
+
+	if err != nil {
+		panic(err)
+		return
+	}
+
+	for rows.Next() {
+
+		id := int64(0)
+		rows.Scan(&id)
+		datas = append(datas, id)
+	}
+
+	return
+}
+
 /**
 获取用户完播率最大的课程uuid
 **/
@@ -68,8 +92,46 @@ func (guess GuessLikeModuleDataDao) FindUserMaxPlayPctLiveUUID(userId int64) (da
 	return
 }
 
+//获取观看过这些课程的用户id
+func (guess GuessLikeModuleDataDao) FindOtherUserId(userId int64, liveUUIDs []string) (datas []int64) {
+
+	var sql []byte
+	sql = append(sql, " select DISTINCT d.userid"...)
+	sql = append(sql, " from ods_cm_event_course_play_view_day d "...)
+	sql = append(sql, " where d.userid!=? and d.liveUUID in ("...)
+
+	for index, uuid := range liveUUIDs {
+
+		if index == len(liveUUIDs)-1 {
+			sql = append(sql, "'"+uuid+"') "...)
+		} else {
+			sql = append(sql, "'"+uuid+"',"...)
+		}
+	}
+
+	sql = append(sql, " LIMIT 50"...)
+
+	rows, err := utils.Db.Query(string(sql), userId)
+	defer utils.ErrorCatch()
+	defer rows.Close()
+
+	if err != nil {
+		panic(err)
+		return
+	}
+
+	for rows.Next() {
+
+		var uid int64 = 0
+		rows.Scan(&uid)
+		datas = append(datas, uid)
+	}
+
+	return
+}
+
 //获取其他用户完播率最大的课程uuid
-func (guess GuessLikeModuleDataDao) FindOtherUserMaxPlayPctLiveInfo(userId int64, liveUUID []string) (datas []entitys.LivePlayPctInfo) {
+func (guess GuessLikeModuleDataDao) FindOtherUserMaxPlayPctLiveInfo(userIds []int64) (datas []entitys.LivePlayPctInfo) {
 
 	var sql []byte
 
@@ -77,28 +139,22 @@ func (guess GuessLikeModuleDataDao) FindOtherUserMaxPlayPctLiveInfo(userId int64
 	sql = append(sql, "from ods_cm_live_classroom c INNER join  ( "...)
 	sql = append(sql, "select  od.userid,od.liveUUID,max(od.playPct) as pct "...)
 	sql = append(sql, "from ods_cm_event_course_play_view_day od  "...)
-	sql = append(sql, "INNER join ( "...)
-	sql = append(sql, "select DISTINCT d.userid "...)
-	sql = append(sql, "from ods_cm_event_course_play_view_day d  "...)
-	sql = append(sql, "where d.userid!=? and d.liveUUID in ( "...)
+	sql = append(sql, "where od.userid in ( "...)
 
-	for index, uuid := range liveUUID {
+	for index, uid := range userIds {
 
-		if index == len(liveUUID)-1 {
-			sql = append(sql, "'"+uuid+"') "...)
+		if index == len(userIds)-1 {
+			sql = append(sql, ""+strconv.FormatInt(uid, 10)+") "...)
 		} else {
-			sql = append(sql, "'"+uuid+"',"...)
+			sql = append(sql, ""+strconv.FormatInt(uid, 10)+","...)
 		}
 	}
 
-	sql = append(sql, ") as ot ON od.userid=ot.userid "...)
-	sql = append(sql, "GROUP BY od.liveUUID "...)
-	sql = append(sql, "ORDER BY od.playPct desc "...)
-	sql = append(sql, "LIMIT 1000 "...)
+	sql = append(sql, "GROUP BY od.liveUUID ORDER BY pct desc LIMIT 50 "...)
 	sql = append(sql, ") as ct "...)
 	sql = append(sql, "on ct.liveUUID=c.liveUUID; "...)
 
-	rows, err := utils.Db.Query(string(sql), userId)
+	rows, err := utils.Db.Query(string(sql))
 	defer utils.ErrorCatch()
 	defer rows.Close()
 

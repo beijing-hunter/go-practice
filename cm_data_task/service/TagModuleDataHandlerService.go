@@ -1,24 +1,30 @@
 package service
 
 import (
+	"cm_data_task/caches"
 	"cm_data_task/dao"
 	"cm_data_task/entitys"
 	"cm_data_task/utils"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
 
 var (
-	DataCollectChan chan entitys.DataCollectNotifyInfo
-	hdao            = dao.TagModuleDataDao{}
+	DataCollectChan        chan entitys.DataCollectNotifyInfo
+	hdao                   = dao.TagModuleDataDao{}
+	userTagCache           = caches.UserTagWeightCache{}
+	liveOrderfinalCache    = caches.LiveOrderfinalCache{}
+	moduleSettingLiveCache = caches.ModuleSettingLiveCache{}
+	userUseLiveIdCache     = caches.UserUseLiveIdCache{}
 )
 
 //标签模块数据处理
 type TagModuleDataHandlerService struct{}
 
 func init() {
-	DataCollectChan = make(chan entitys.DataCollectNotifyInfo, 200)
+	DataCollectChan = make(chan entitys.DataCollectNotifyInfo, 1000)
 }
 
 func (service TagModuleDataHandlerService) ClearDatas(isallClear bool) {
@@ -48,28 +54,15 @@ func (service TagModuleDataHandlerService) TagModuleDataCollect(isCollectEnd boo
 
 	for _, moduleInfo := range moduleInfos {
 
-		var collectUserIds []int64 //收集过的userid
 		goroutineCount := 0
 		tagIds := strings.Split(moduleInfo.TagIdStr, ",")
 
-		if isCollectEnd == false {
-			collectUserIds = hdao.FindCollectModuleUserIds(moduleInfo.Id)
-		}
-
-		collectUserIdMap := utils.SliceToMapInt(collectUserIds)
-
 		for _, userCategoryInfo := range userCategoryDatas {
 
-			_, ok := collectUserIdMap[userCategoryInfo.UserId]
+			go service.singleUserDataCollect(moduleInfo, userCategoryInfo, tagIds)
+			goroutineCount++
 
-			if !ok { //未收集
-				go service.singleUserDataCollect(moduleInfo, userCategoryInfo, tagIds)
-				goroutineCount++
-			} else {
-				service.pushCollectChan(moduleInfo.Id, userCategoryInfo)
-			}
-
-			if goroutineCount > 50 || len(DataCollectChan) > 40 {
+			if goroutineCount > 500 {
 				time.Sleep(time.Second * 10) //休眠10秒
 				goroutineCount = 0
 			}
@@ -89,20 +82,20 @@ func (service TagModuleDataHandlerService) TagModuleDataMachiningFacatory() {
 
 		}
 	}
+
 }
 
 //标签模块数据加工
 func (service TagModuleDataHandlerService) tagModuleDataMachining(notifyInfo entitys.DataCollectNotifyInfo) {
 
-	moduleSettingLiveInfo := hdao.FindModuleSettingLiveInfo(notifyInfo.ModuleId)
-	useLiveIdDatas := hdao.FindUseLiveId(notifyInfo.ModuleId, notifyInfo.UserId)
-	useLiveIdMap := service.converMap(useLiveIdDatas)
+	moduleSettingLiveInfo := moduleSettingLiveCache.GetValue(notifyInfo.ModuleId)
 	categoryIds := strings.Split(notifyInfo.CategroyIdStr, ",")
 
 	for _, categoryIdS := range categoryIds {
 
 		categoryId, _ := strconv.ParseInt(categoryIdS, 10, 64)
 		var recommendLiveDataResult []entitys.RecommendLiveInfo
+		var recommentResultLiveId []int64
 		resultLiveMap := make(map[int64]int64, 30)
 
 		if len(moduleSettingLiveInfo) != 0 {
@@ -124,11 +117,12 @@ func (service TagModuleDataHandlerService) tagModuleDataMachining(notifyInfo ent
 
 					resultLiveMap[sliveInfo.LiveId] = sliveInfo.LiveId
 					recommendLiveDataResult = append(recommendLiveDataResult, result)
+					recommentResultLiveId = append(recommentResultLiveId, result.LiveId)
 				}
 			}
 		}
 
-		collectRestulDatas := hdao.FindCollectResult(notifyInfo.ModuleId, categoryId, notifyInfo.UserId)
+		collectRestulDatas, _ := notifyInfo.CollectResultData.(LiveDataCollectResultSort)
 
 		if len(collectRestulDatas) == 0 {
 			utils.InfoLogger.Printf("标签模块数据加工-用户订阅的学科没有收集到数据:ModuleId=%v,categoryId=%v,UserId=%v\n", notifyInfo.ModuleId, categoryId, notifyInfo.UserId)
@@ -139,7 +133,7 @@ func (service TagModuleDataHandlerService) tagModuleDataMachining(notifyInfo ent
 				if collectInfo.CategoryId == categoryId {
 
 					_, ok := resultLiveMap[collectInfo.LiveId]
-					_, ok2 := useLiveIdMap[collectInfo.LiveId]
+					ok2 := userUseLiveIdCache.IsUseLiveId(notifyInfo.UserId, collectInfo.LiveId)
 
 					if !ok && !ok2 {
 
@@ -156,6 +150,7 @@ func (service TagModuleDataHandlerService) tagModuleDataMachining(notifyInfo ent
 
 						resultLiveMap[collectInfo.LiveId] = collectInfo.LiveId
 						recommendLiveDataResult = append(recommendLiveDataResult, result)
+						recommentResultLiveId = append(recommentResultLiveId, result.LiveId)
 
 						if len(recommendLiveDataResult) >= 10 {
 							break
@@ -168,6 +163,8 @@ func (service TagModuleDataHandlerService) tagModuleDataMachining(notifyInfo ent
 		if len(recommendLiveDataResult) > 0 {
 			utils.InfoLogger.Printf("标签模块数据加工-用户推荐课程数据加工完成:ModuleId=%v,categoryId=%v,UserId=%v\n", notifyInfo.ModuleId, categoryId, notifyInfo.UserId)
 			hdao.AddRecommendLiveResult(recommendLiveDataResult)
+			userUseLiveIdCache.AddUseLiveId(notifyInfo.UserId, recommentResultLiveId)
+
 		} else {
 			utils.InfoLogger.Printf("标签模块数据加工-用户订阅的学科没有匹配到数据:ModuleId=%v,categoryId=%v,UserId=%v\n", notifyInfo.ModuleId, categoryId, notifyInfo.UserId)
 		}
@@ -179,6 +176,7 @@ func (service TagModuleDataHandlerService) singleUserDataCollect(moduleInfo enti
 
 	categoryIds := strings.Split(userCategoryInfo.CategroyIdStr, ",")
 	categoryWeights := strings.Split(userCategoryInfo.CategroryWeightsStr, ",")
+	dataCollectResultMap := make(map[int64]entitys.LiveDataCollectResult, 300)
 
 	for cIndex, categoryIdS := range categoryIds {
 
@@ -187,27 +185,26 @@ func (service TagModuleDataHandlerService) singleUserDataCollect(moduleInfo enti
 		for _, tagIdS := range tagIds {
 
 			tagId, _ := strconv.ParseInt(tagIdS, 10, 64)
-			userTagDatas := hdao.FindUserTagWeights(userCategoryInfo.UserId, tagId)
 
-			if len(userTagDatas) == 0 {
+			tagKey := strconv.FormatInt(userCategoryInfo.UserId, 10) + strconv.FormatInt(tagId, 10)
+			tagWeight := userTagCache.GetValue(tagKey)
 
-				tagInfo := entitys.UserTagWeights{UserId: userCategoryInfo.UserId, TagId: tagId, TagWeights: "0"}
-				userTagDatas = append(userTagDatas, tagInfo)
+			if tagWeight == "" {
+				tagWeight = "0"
 			}
 
-			liveOrderfinalDatas := hdao.FindLiveOrderfinalInfos(moduleInfo.Id, categoryId, tagId)
+			liveKey := strconv.FormatInt(moduleInfo.Id, 10) + strconv.FormatInt(categoryId, 10) + strconv.FormatInt(tagId, 10)
+			liveOrderfinalDatas := liveOrderfinalCache.GetValue(liveKey)
 
 			if len(liveOrderfinalDatas) == 0 {
 				utils.InfoLogger.Printf("标签模块数据收集-学科与标签下没有获取到课程:moduleId=%v,categoryId=%v,tagId=%v\n", moduleInfo.Id, categoryId, tagId)
 			} else {
 
-				var dataResults []entitys.LiveDataCollectResult
-
 				for _, liveOrderfinalInfo := range liveOrderfinalDatas {
 
 					oValue, _ := strconv.ParseFloat(liveOrderfinalInfo.Orderfinal, 64)
 					cWValue, _ := strconv.ParseFloat(categoryWeights[cIndex], 64)
-					tWValue, _ := strconv.ParseFloat(userTagDatas[0].TagWeights, 64)
+					tWValue, _ := strconv.ParseFloat(tagWeight, 64)
 					resultValue := oValue * cWValue * tWValue
 
 					result := entitys.LiveDataCollectResult{
@@ -218,26 +215,48 @@ func (service TagModuleDataHandlerService) singleUserDataCollect(moduleInfo enti
 						UserId:     userCategoryInfo.UserId,
 						Orderfinal: resultValue,
 					}
-					result.Livetype, _ = strconv.ParseInt(liveOrderfinalInfo.Livetype, 10, 64)
 
-					dataResults = append(dataResults, result)
+					result.Livetype, _ = strconv.ParseInt(liveOrderfinalInfo.Livetype, 10, 64)
+					liveOrderfinalInfoValue, ok := dataCollectResultMap[liveOrderfinalInfo.LiveId]
+
+					if !ok {
+						dataCollectResultMap[liveOrderfinalInfo.LiveId] = result
+					} else {
+
+						if liveOrderfinalInfoValue.Orderfinal < result.Orderfinal {
+							liveOrderfinalInfoValue.Orderfinal = result.Orderfinal
+							dataCollectResultMap[liveOrderfinalInfo.LiveId] = liveOrderfinalInfoValue
+						}
+					}
 				}
 
 				utils.InfoLogger.Printf("标签模块数据收集-用户相关课程数据收集完成:moduleId=%v,userId=%v,categoryId=%v,tagId=%v\n", moduleInfo.Id, userCategoryInfo.UserId, categoryId, tagId)
-				hdao.AddCollectResult(dataResults)
 			}
 		}
 	}
 
-	service.pushCollectChan(moduleInfo.Id, userCategoryInfo)
+	var resultSort LiveDataCollectResultSort
+
+	if len(dataCollectResultMap) > 0 {
+
+		for _, value := range dataCollectResultMap {
+
+			resultSort = append(resultSort, value)
+		}
+
+		sort.Sort(resultSort)
+	}
+
+	service.pushCollectChan(moduleInfo.Id, userCategoryInfo, resultSort)
 }
 
 //单个用户数据收集完成通知工厂加工数据
-func (service TagModuleDataHandlerService) pushCollectChan(moduleId int64, userCategoryInfo entitys.UserCategoryWeights) {
+func (service TagModuleDataHandlerService) pushCollectChan(moduleId int64, userCategoryInfo entitys.UserCategoryWeights, resultSort LiveDataCollectResultSort) {
 	notifyInfo := entitys.DataCollectNotifyInfo{
-		UserId:        userCategoryInfo.UserId,
-		ModuleId:      moduleId,
-		CategroyIdStr: userCategoryInfo.CategroyIdStr,
+		UserId:            userCategoryInfo.UserId,
+		ModuleId:          moduleId,
+		CategroyIdStr:     userCategoryInfo.CategroyIdStr,
+		CollectResultData: resultSort,
 	}
 	DataCollectChan <- notifyInfo
 }
@@ -280,4 +299,21 @@ func (service TagModuleDataHandlerService) IsCollectEnd() (result bool) {
 	count := hdao.FindCollectSign()
 	result = count >= 2
 	return
+}
+
+type LiveDataCollectResultSort []entitys.LiveDataCollectResult
+
+func (s LiveDataCollectResultSort) Len() int {
+	return len(s)
+}
+
+func (s LiveDataCollectResultSort) Less(i, j int) bool {
+	return s[i].Orderfinal > s[j].Orderfinal
+}
+
+func (s LiveDataCollectResultSort) Swap(i, j int) {
+
+	temp := s[i]
+	s[i] = s[j]
+	s[j] = temp
 }

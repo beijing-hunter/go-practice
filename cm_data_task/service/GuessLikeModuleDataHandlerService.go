@@ -3,7 +3,7 @@ package service
 import (
 	"cm_data_task/dao"
 	"cm_data_task/utils"
-	"time"
+	"sync"
 )
 
 var (
@@ -24,21 +24,39 @@ func (service GuessLikeModuleDataHandlerService) Handler() {
 		return
 	}
 
-	goroutineCount := 0
+	userCount := len(userIds)
+	groupCount := 1000
+	groupLength := userCount / groupCount
 
-	for i := 0; i < len(userIds); i++ {
-		userId := userIds[i]
-		go service.SingleUserDataHandler(userId, moduleId, tservice)
-		goroutineCount++
+	for i := 0; i <= groupCount; i++ { //分组执行goruntine
 
-		if goroutineCount > 30 {
-			time.Sleep(time.Second * 20) //休眠10秒
-			goroutineCount = 0
+		j := i * groupLength
+		groupMaxLength := j + groupLength
+
+		if groupMaxLength > userCount {
+
+			groupMaxLength = userCount
+			groupLength = userCount - j
 		}
 
-		if (len(userIds) - i) == 10 { //当剩余处理用户还有10个时：休眠40秒，略微等待其它goroutine数据处理
-			time.Sleep(time.Second * 40) //休眠40秒
+		if groupLength <= 0 {
+			break
 		}
+
+		wg := sync.WaitGroup{}
+		wg.Add(groupLength) //每组执行groupLength个goruntine则进入等待
+
+		for ; j < groupMaxLength; j++ {
+
+			userId := userIds[j]
+
+			go func(uid int64) {
+				defer wg.Done()
+				service.SingleUserDataHandler(uid, moduleId, tservice)
+			}(userId)
+		}
+
+		wg.Wait()
 	}
 
 	utils.InfoLogger.Println("猜你喜欢模块-处理完成")
@@ -47,7 +65,14 @@ func (service GuessLikeModuleDataHandlerService) Handler() {
 func (service GuessLikeModuleDataHandlerService) SingleUserDataHandler(userId int64, moduleId int64, tservice TagModuleDataHandlerService) {
 
 	liveUUIDs := guessDao.FindUserMaxPlayPctLiveUUID(userId)
-	livePctInfos := guessDao.FindOtherUserMaxPlayPctLiveInfo(userId, liveUUIDs)
+	otherUserIds := guessDao.FindOtherUserId(userId, liveUUIDs)
+
+	if otherUserIds == nil || len(otherUserIds) == 0 {
+		utils.InfoLogger.Printf("猜你喜欢模块-没有其他用户观看此课程:userId=%v,liveUUIDS=%v\n", userId, liveUUIDs)
+		return
+	}
+
+	livePctInfos := guessDao.FindOtherUserMaxPlayPctLiveInfo(otherUserIds)
 
 	if len(livePctInfos) == 0 {
 		utils.InfoLogger.Printf("猜你喜欢模块-观看此课程的用户，没有观看过其他课程:userId=%v,liveUUIDS=%v\n", userId, liveUUIDs)
@@ -58,13 +83,10 @@ func (service GuessLikeModuleDataHandlerService) SingleUserDataHandler(userId in
 	userLiveUUIDs := guessDao.FindUserPlayPctLiveUUId(userId) //用户观看过的课程uuid
 	userLiveUUIDMap := utils.SliceToMapString(userLiveUUIDs)
 
-	useLiveIdDatas := hdao.FindUseLiveId(moduleId, userId) //自定义模块推荐给用户的课程id
-	useLiveIdMap := tservice.converMap(useLiveIdDatas)
-
 	for _, livePctInfo := range livePctInfos {
 
 		_, ok := userLiveUUIDMap[livePctInfo.LiveUUID]
-		_, ok2 := useLiveIdMap[livePctInfo.LiveId]
+		ok2 := userUseLiveIdCache.IsUseLiveId(userId, livePctInfo.LiveId)
 
 		if !ok && !ok2 { //取补集
 			complementLiveIds = append(complementLiveIds, livePctInfo.LiveId)
@@ -84,6 +106,7 @@ func (service GuessLikeModuleDataHandlerService) SingleUserDataHandler(userId in
 		} else {
 			utils.InfoLogger.Printf("猜你喜欢模块-筛选到用户喜欢的课程:userId=%v\n", userId)
 			hdao.AddRecommendLiveResult(liveOrderfinalDatas)
+			userUseLiveIdCache.AddUseLiveId(userId, complementLiveIds)
 		}
 	}
 

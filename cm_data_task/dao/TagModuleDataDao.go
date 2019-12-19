@@ -64,12 +64,65 @@ func (home TagModuleDataDao) FindLiveOrderfinalInfos(moduleId int64, categoryId 
 	return
 }
 
+//查询课程排序值
+func (home TagModuleDataDao) FindAllLiveOrderfinalInfos() (datas []entitys.LiveOrderfinal) {
+
+	sql := "SELECT  hmt.module_id as moduleId,lt.liveId,lt.tagId,cep.categoryId,cep.orderfinal,cep.livetype " +
+		"from ods_cm_homepage_module_tag hmt  " +
+		"INNER join ods_cm_live_tag lt ON hmt.tag_id=lt.tagId " +
+		"INNER JOIN dim_cmt_course_evaluation_profile cep ON lt.liveId=cep.subjectId " +
+		"order by cep.orderfinal DESC "
+
+	rows, err := utils.Db.Query(sql)
+	defer utils.ErrorCatch()
+	defer rows.Close()
+
+	if err != nil {
+		panic(err)
+		return
+	}
+
+	for rows.Next() {
+		info := entitys.LiveOrderfinal{}
+		rows.Scan(&info.ModuleId, &info.LiveId, &info.TagId, &info.CategoryId, &info.Orderfinal, &info.Livetype)
+		datas = append(datas, info)
+	}
+
+	return
+}
+
 //用户学科权重
 func (home TagModuleDataDao) FindUserCategoryWeights() (datas []entitys.UserCategoryWeights) {
 
 	sql := "SELECT ucp.userId,GROUP_CONCAT(ucp.categroyId) as categroyIdStr, " +
 		"GROUP_CONCAT(ucp.categroryWeights) as categroryWeightsStr " +
 		"from dim_user_course_profile ucp where lastactDate is not null " +
+		"GROUP BY ucp.userId"
+
+	rows, err := utils.Db.Query(sql)
+	defer utils.ErrorCatch()
+	defer rows.Close()
+
+	if err != nil {
+		panic(err)
+		return
+	}
+
+	for rows.Next() {
+
+		info := entitys.UserCategoryWeights{}
+		rows.Scan(&info.UserId, &info.CategroyIdStr, &info.CategroryWeightsStr)
+		datas = append(datas, info)
+	}
+
+	return
+}
+
+func (home TagModuleDataDao) FindUserCategoryWeightsTest(userId int64) (datas []entitys.UserCategoryWeights) {
+
+	sql := "SELECT ucp.userId,GROUP_CONCAT(ucp.categroyId) as categroyIdStr, " +
+		"GROUP_CONCAT(ucp.categroryWeights) as categroryWeightsStr " +
+		"from dim_user_course_profile ucp where ucp.userId in (" + strconv.FormatInt(userId, 10) + ")" +
 		"GROUP BY ucp.userId"
 
 	rows, err := utils.Db.Query(sql)
@@ -99,6 +152,31 @@ func (home TagModuleDataDao) FindUserTagWeights(userId int64, tagId int64) (data
 		"where uctp.userid=? and uctp.tagId=?"
 
 	rows, err := utils.Db.Query(sql, userId, tagId)
+	defer utils.ErrorCatch()
+	defer rows.Close()
+
+	if err != nil {
+		panic(err)
+		return
+	}
+
+	for rows.Next() {
+
+		info := entitys.UserTagWeights{}
+		rows.Scan(&info.UserId, &info.TagId, &info.TagWeights)
+		datas = append(datas, info)
+	}
+
+	return
+}
+
+//用户标签权重
+func (home TagModuleDataDao) FindAllUserTagWeights() (datas []entitys.UserTagWeights) {
+
+	sql := "select uctp.userid,uctp.tagId,uctp.tagWeights " +
+		"from dim_user_content_tag_profile uctp "
+
+	rows, err := utils.Db.Query(sql)
 	defer utils.ErrorCatch()
 	defer rows.Close()
 
@@ -198,6 +276,19 @@ func (home TagModuleDataDao) FindCollectResult(moduleId int64, categoryId int64,
 	return
 }
 
+//删除数据收集结果
+func (home TagModuleDataDao) DelCollectResult(moduleId int64, categoryId int64, userId int64) {
+
+	sql := "delete from cm_homepage_recommend_temple where module_id=? and category_id=? and userId=?;"
+	_, error := utils.Db.Exec(string(sql), moduleId, categoryId, userId)
+
+	if error != nil {
+		panic(error)
+	}
+
+	defer utils.ErrorCatch()
+}
+
 //添加数据收集结果
 func (home TagModuleDataDao) AddCollectResult(datas []entitys.LiveDataCollectResult) {
 
@@ -284,7 +375,6 @@ func (home TagModuleDataDao) ClearDatas(isallClear bool) {
 
 	if isallClear {
 		sql = "DELETE from cm_homepage_recommend_temple;"
-
 		_, error = utils.Db.Exec(string(sql))
 	}
 

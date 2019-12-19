@@ -2,16 +2,13 @@ package utils
 
 import (
 	"database/sql"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
-	dbusername = "124ww"
-	dbpassword = "12wdw134"
-	dbhostip   = "123.562.34.314:3306"
-	dbname     = "12323"
-	Db         *sql.DB
+	Db *sql.DB
 )
 
 //type DbFacatory struct {
@@ -19,11 +16,17 @@ var (
 //}
 
 func init() {
+
+	dbusername := IniParserInstance.GetString("mysql", "dbusername")
+	dbpassword := IniParserInstance.GetString("mysql", "dbpassword")
+	dbhostip := IniParserInstance.GetString("mysql", "dbhostip")
+	dbname := IniParserInstance.GetString("mysql", "dbname")
 	var err error
 
 	Db, err = sql.Open("mysql", dbusername+":"+dbpassword+"@tcp("+dbhostip+")/"+dbname+"?charset=utf8")
-	Db.SetMaxOpenConns(100)
-	Db.SetMaxIdleConns(40)
+	Db.SetMaxOpenConns(int(IniParserInstance.GetInt64("mysql", "maxOpenConns")))
+	Db.SetMaxIdleConns(int(IniParserInstance.GetInt64("mysql", "maxIdleConns")))
+	Db.SetConnMaxLifetime(time.Minute * time.Duration(IniParserInstance.GetInt64("mysql", "maxLifetime")))
 
 	if err != nil {
 		panic(err)

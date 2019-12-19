@@ -6,6 +6,7 @@ type LiveOrderfinal struct {
 	CategoryId int64
 	Orderfinal string
 	Livetype   string
+	ModuleId   int64
 }
 
 type LiveDataCollectResult struct {
