@@ -1,0 +1,14 @@
+sudo: required
+
+language: go
+
+go:
+  - "1.12"
+
+install:
+  - sudo apt-get update
+  - sudo apt-get install -y libpcap-dev
+
+script:
+  - export GO111MODULE=on
+  - make build

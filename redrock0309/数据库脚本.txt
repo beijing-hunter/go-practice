@@ -1,0 +1,44 @@
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE `user` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(100) NOT NULL,
+  `password` varchar(50) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  `add` tinyint(1) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_deleted_at` (`deleted_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
+
+
+DROP TABLE IF EXISTS `vote`;
+CREATE TABLE `vote` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `vname` varchar(50) NOT NULL COMMENT '赛事名称',
+  `starttime` varchar(50) NOT NULL COMMENT '投票开始时间',
+  `endtime` varchar(50) NOT NULL COMMENT '投票结束时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+
+
+DROP TABLE IF EXISTS `voteresult`;
+CREATE TABLE `voteresult` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `voteid` int(11) NOT NULL COMMENT '赛事信息id',
+  `xsuserid` int(11) NOT NULL COMMENT '参赛用户id',
+  `xsusername` varchar(50) NOT NULL COMMENT '参赛选手名称',
+  `tpuserid` int(11) NOT NULL COMMENT '投票用户id',
+  `tpusername` varchar(50) NOT NULL COMMENT '投票用户名称',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS `voteuser`;
+CREATE TABLE `voteuser` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `voteid` int(11) NOT NULL COMMENT '赛事信息id',
+  `xsuserid` int(11) NOT NULL COMMENT '参赛用户id',
+  `xsusername` varchar(100) NOT NULL COMMENT '参赛用户名称',
+  `votetotalcount` int(6) DEFAULT NULL COMMENT '选手投票总个数',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
