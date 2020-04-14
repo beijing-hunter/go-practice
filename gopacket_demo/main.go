@@ -21,5 +21,5 @@ func main() {
             fmt.Println("- IP address: ", address.IP)
             fmt.Println("- Subnet mask: ", address.Netmask)
         }
-    }
+    } 
 }
