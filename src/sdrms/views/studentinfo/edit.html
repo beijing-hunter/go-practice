@@ -1,0 +1,26 @@
+<form id="thisForm">
+    <input type="hidden" name="Id" id="Id" value="{{.m.Id}}">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label>学号</label>
+                <input type="text"  name="Sno" class="form-control" placeholder="长度不超过10" value="{{.m.Sno}}">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label>姓名</label>
+                <input type="text" name="RealName" class="form-control" placeholder="长度不超过5" value="{{.m.RealName}}">
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label>密码</label>
+                <input type="text" name="Password" class="form-control" placeholder="留空则不修改">
+            </div>
+        </div>
+    </div>
+</form>
+</div>

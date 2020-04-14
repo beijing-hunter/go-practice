@@ -1,0 +1,54 @@
+
+1.用户注册接口
+http://127.0.0.1:8089/register
+请求参数：
+username：用户名称
+password：用户密码
+
+2.用户登录接口
+http://127.0.0.1:8089/login
+请求参数：
+username：用户名称
+password：用户密码
+返回参数：
+token:用户登录成功，返回token值，除1,2接口，请求其它接口时需要在header中传递此值
+
+3.添加赛事信息接口
+http://127.0.0.1:8089/vote/add
+请求参数：
+vname：赛事名称
+starttime：投票开始时间 数据格式：yyyy-MM-dd HH:mm
+endtime：投票结束时间  数据格式：yyyy-MM-dd HH:mm   注：开始时间必须小于结束时间
+
+4.获取赛事信息列表
+http://127.0.0.1:8089/vote/list
+
+
+5.修改赛事投票开始时间与结束时间
+http://127.0.0.1:8089/vote/update/time
+请求参数：
+starttime：投票开始时间 数据格式：yyyy-MM-dd HH:mm
+endtime：投票结束时间  数据格式：yyyy-MM-dd HH:mm   注：开始时间必须小于结束时间
+vid：赛事id
+
+
+6.用户报名参与赛事
+http://127.0.0.1:8089/vote/xs/partake
+请求参数：
+vid：赛事id
+
+7.用户退出赛事
+http://127.0.0.1:8089/vote/xs/exit
+请求参数：
+vid：赛事id
+
+8.获取参与赛事的用户信息及排行榜，根据投票个数从高到底排序
+http://127.0.0.1:8089/vote/xs/list
+请求参数：
+vid：赛事id
+
+9.用户给参赛选手投票
+http://127.0.0.1:8089/vote/result/tp
+请求参数：
+vid：赛事id
+xsuserid：参赛选手用户id

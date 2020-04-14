@@ -13,6 +13,8 @@ func getInfo(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < 10000; i++ {
 		datas = append(datas, strings.ToLower("Hounter")) //演示内存消耗大的场景
 	}
+
+
 }
 
 func main() {

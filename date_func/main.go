@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"time"
+	"math/rand"
 )
 
 func main() {
@@ -26,17 +27,14 @@ func main() {
 	fmt.Println(now.Unix())     //当前时间秒时间戳
 	fmt.Println(now.UnixNano()) //当前时间纳秒时间戳
 
-	i := 0
+	m,_:=time.ParseDuration("1m")//加1分钟
+	h,_:=time.ParseDuration("1h")//加1小时
+	fmt.Printf("now=%v\n", now.Add(m).Format("2006/01/02 15:04:05"))
+	fmt.Printf("now=%v\n", now.Add(h).Format("2006/01/02 15:04:05"))
 
-	for {
-
-		i++
-		fmt.Println(i)
-		time.Sleep(time.Second) //休眠1秒
-
-		if i > 100 {
-			break
-		}
+	for i:=1;i<10;i++ {
+	rand.Seed(time.Now().UnixNano())
+	fmt.Println(rand.Perm(6))
+	
 	}
-
 }

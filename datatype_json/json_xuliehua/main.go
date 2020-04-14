@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/json-iterator/go"
 )
 
 type Student struct{
@@ -24,6 +25,8 @@ func jsonStruct()  {
 
 	dataStr:=string(dataByte)
 	fmt.Println("json data=",dataStr)
+
+
 }
 
 func jsonMap(){
@@ -64,7 +67,21 @@ func jsonSlice(){
 }
 
 func main()  {
-	jsonStruct()
-	jsonMap()
-	jsonSlice()
+	//jsonStruct()
+	//jsonMap()
+	//jsonSlice()
+
+	stuMap:=make(map[interface{}]interface{})
+	stuMap["oneStu"]=&Student{"卢布",13}
+	stuMap[23]=&Student{"东王太医",130}
+
+	dataByte,err:=jsoniter.Marshal(stuMap)
+
+	if err!=nil{
+		fmt.Println("序列化失败",err)
+		return
+	}
+
+	dataStr:=string(dataByte)
+	fmt.Println("json data=",dataStr)
 }

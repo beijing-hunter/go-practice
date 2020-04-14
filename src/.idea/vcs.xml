@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/.." vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/astaxie/beego" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/beego/bee" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/frankban/quicktest" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/gin-contrib/sse" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/gin-gonic/gin" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/go-playground/validator" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/go-sql-driver/mysql" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/golang/protobuf" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/gomodule/redigo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/google/btree" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/google/go-cmp" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/google/gopacket" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/json-iterator/go" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/kr/pretty" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/kr/text" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/malfunkt/arpfox" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/malfunkt/iprange" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/mattn/go-isatty" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/modern-go/concurrent" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/modern-go/reflect2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/op/go-logging" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/peterbourgon/diskv" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/pkg/errors" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/rogpeppe/fastuuid" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/shiena/ansicolor" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/spf13/cast" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/tealeg/xlsx" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/github.com/ugorji/go" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/gopkg.in/yaml.v2" vcs="Git" />
+  </component>
+</project>
