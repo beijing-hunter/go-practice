@@ -13,7 +13,7 @@ type  TUser struct {
 
 func init()  {
 
-	orm.RegisterDataBase("default","mysql","root:cmt123@tcp(123.56.4.34:3306)/azkaban?charset=utf8")
+	orm.RegisterDataBase("default","mysql","root:123456@tcp(123.56.4.37:3306)/azkaban?charset=utf8")
 	orm.RegisterModel(new(TUser))
 	orm.RunSyncdb("default",false,true)
 }

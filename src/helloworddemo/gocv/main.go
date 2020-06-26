@@ -13,7 +13,7 @@ import (
 	"gocv.io/x/gocv"
 )
 
-var (
+var ( 
 	deviceID int
 	err      error
 	webcam   *gocv.VideoCapture
@@ -65,7 +65,7 @@ func mjpegCapture() {
 		}
 
 		buf, _ := gocv.IMEncode(".jpg", img)
-		saveImg(buf)
+		//saveImg(buf)
 		stream.UpdateJPEG(buf)
 	}
 }
