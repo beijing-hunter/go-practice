@@ -26,6 +26,7 @@ func main()  {
 	now=time.Now()
 	scheduleTable=make(map[string]*CronJob)
 
+	//5毫秒
 	expr=cronexpr.MustParse("*/5 * * * * * *")
 	cronJob=&CronJob{
 		expr:expr,
