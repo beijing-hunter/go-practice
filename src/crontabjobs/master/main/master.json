@@ -1,0 +1,15 @@
+{
+  "apiPort": 8070,
+  "API接口读超时": "单位毫秒",
+  "apiReadTimeout": 5000,
+  "API接口写超时": "单位毫秒",
+  "apiWriteTimeout": 5000,
+  "etcd集群地址配置": "ip地址",
+  "etcdEndpoints": [
+    "127.0.0.1:2379"
+  ],
+  "etcd请求超时": "单位毫秒",
+  "etcdDialTimeout": 5000,
+  "Web页面根目录": "路径",
+  "webRoot": "./webroot"
+}

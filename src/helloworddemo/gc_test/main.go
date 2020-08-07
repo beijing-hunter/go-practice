@@ -7,7 +7,7 @@ type Student struct {
 	Age  int8
 }
 
-func main() { //GODEBUG=gctrace=1 go run main.go
+func main() { //GODEBUG=gctrace=1 go run master.go
 
 	var stus []Student
 

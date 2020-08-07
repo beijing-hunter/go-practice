@@ -1,2 +1,4 @@
 pkg/
 src/github.com
+src/cronexprdemo/vendor
+src/crontabjobs/vendor

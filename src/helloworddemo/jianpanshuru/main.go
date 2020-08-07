@@ -9,7 +9,7 @@ var (
 	handlerfuc = ""
 )
 
-func init() { //命令行传参接收：如：go run main.go -handlerfuc func
+func init() { //命令行传参接收：如：go run master.go -handlerfuc func
 	flag.StringVar(&handlerfuc, "handlerfuc", "defaultfunc", "需要执行那个处理函数")
 }
 

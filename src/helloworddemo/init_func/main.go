@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	fmt.Println("main.go init....")
+	fmt.Println("master.go init....")
 }
 
 func main() {

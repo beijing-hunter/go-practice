@@ -1,0 +1,8 @@
+{
+  "etcd集群地址配置": "ip地址",
+  "etcdEndpoints": [
+    "127.0.0.1:2379"
+  ],
+  "etcd请求超时": "单位毫秒",
+  "etcdDialTimeout": 5000
+}

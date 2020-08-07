@@ -15,7 +15,7 @@ func init() {
 	flag.StringVar(&handlerFuncName, "handlerFuncName", "modelDataHandler", "执行那个数据处理函数")
 }
 
-func main() { //main函数启动命令如：go run main.go -handlerFuncName moduleDataHandler
+func main() { //main函数启动命令如：go run master.go -handlerFuncName moduleDataHandler
 
 	flag.Parse() //暂停获取参数
 
