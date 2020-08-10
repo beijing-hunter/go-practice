@@ -58,6 +58,7 @@ func (jobMgr *JobMgr) WatchJobs() (err error) {
 		getResp  *clientv3.GetResponse
 		keyValue *mvccpb.KeyValue
 		jobInfo  *common.Job
+		jobEvent          *common.JobEvent
 	)
 
 	if getResp, err = jobMgr.kv.Get(context.TODO(), common.JOB_SAVE_DIR, clientv3.WithPrefix()); err != nil {
@@ -70,7 +71,8 @@ func (jobMgr *JobMgr) WatchJobs() (err error) {
 			continue
 		}
 
-		//TODO:写入调度
+		jobEvent=common.BuildJobEvent(common.JOB_EVENT_SAVE,jobInfo)
+		G_scheduler.PushJobEvent(jobEvent)
 	}
 
 	go func(getResp *clientv3.GetResponse) {
@@ -95,6 +97,7 @@ func (jobMgr *JobMgr) WatchJobs() (err error) {
 					if jobInfo, err = common.DecodJob(event.Kv.Value); err == nil {
 						jobEvent = common.BuildJobEvent(common.JOB_EVENT_SAVE, jobInfo)
 						//TODO:推送job更新事件信息到任务
+						G_scheduler.PushJobEvent(jobEvent)
 					}
 
 				case mvccpb.DELETE:
@@ -105,6 +108,7 @@ func (jobMgr *JobMgr) WatchJobs() (err error) {
 
 					jobEvent = common.BuildJobEvent(common.JOB_EVENT_DELETE, jobInfo)
 					//TODO:推送job删除事件到任务
+					G_scheduler.PushJobEvent(jobEvent)
 				}
 			}
 		}
