@@ -20,6 +20,20 @@ type JobSchedulePlan struct {
 	NextTime time.Time
 }
 
+type JobExecuteInfo struct {
+	Job      *Job
+	PlanTime time.Time //任务计划执行时间
+	RealTime time.Time //任务实际执行时间
+}
+
+type JobExecuteResult struct {
+	JobExecuteInfo *JobExecuteInfo
+	OutPut         []byte
+	Err            error
+	StartTime      time.Time
+	EndTime        time.Time
+}
+
 type ApiResult struct {
 	Code int         `json:"code"`
 	Msg  string      `json:"msg"`
@@ -71,6 +85,16 @@ func BuildSchedulerPlan(job *Job) (plan *JobSchedulePlan, err error) {
 	}
 
 	return plan, err
+}
+
+func BuildJobExecuteInfo(jobSchedulerPlan *JobSchedulePlan) (jobExecuteInfo *JobExecuteInfo) {
+	jobExecuteInfo = &JobExecuteInfo{
+		Job:      jobSchedulerPlan.Job,
+		PlanTime: jobSchedulerPlan.NextTime,
+		RealTime: time.Now(),
+	}
+
+	return jobExecuteInfo
 }
 
 func DecodJob(jobValue []byte) (job *Job, err error) {
