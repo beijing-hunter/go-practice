@@ -39,6 +39,8 @@ func main() {
 		goto ERR
 	}
 
+	worker.InitScheduler()
+
 	if err = worker.InitJobMgr(); err != nil {
 		goto ERR
 	}

@@ -2,6 +2,7 @@ package worker
 
 import (
 	"crontabjobs/common"
+	"fmt"
 	"time"
 )
 
@@ -64,6 +65,7 @@ func (scheduler *Scheduler) scheduleLoop() {
 	}
 }
 
+//执行任务
 func (scheduler *Scheduler) TrySchedule() (scheduleAfterTime time.Duration) {
 
 	var (
@@ -83,6 +85,7 @@ func (scheduler *Scheduler) TrySchedule() (scheduleAfterTime time.Duration) {
 
 		if jobPlan.NextTime.Before(now) || jobPlan.NextTime.Equal(now) {
 			//TODO:执行任务
+			fmt.Println("执行任务：jobName=", jobPlan.Job.Name)
 			jobPlan.NextTime = jobPlan.Expr.Next(now) //设置下次执行时间
 		}
 
