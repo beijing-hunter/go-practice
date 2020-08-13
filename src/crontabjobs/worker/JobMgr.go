@@ -53,6 +53,7 @@ func InitJobMgr() (err error) {
 	return G_jobMgr.WatchJobs()
 }
 
+//任务数据信息监听
 func (jobMgr *JobMgr) WatchJobs() (err error) {
 
 	var (
@@ -120,4 +121,11 @@ func (jobMgr *JobMgr) WatchJobs() (err error) {
 	}(getResp)
 
 	return err
+}
+
+//创建任务执行lock
+func (jobMgr *JobMgr) CreateJobLock(jobName string) (jobLock *JobLock) {
+
+	jobLock = InitJobLock(jobName, jobMgr.kv, jobMgr.lease)
+	return jobLock
 }

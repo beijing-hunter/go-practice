@@ -18,10 +18,11 @@ var (
 func (executor *Executor) ExecuteJob(info *common.JobExecuteInfo) {
 	go func() {
 		var (
-			cmd    *exec.Cmd
-			output []byte
-			err    error
-			result *common.JobExecuteResult
+			cmd     *exec.Cmd
+			output  []byte
+			err     error
+			result  *common.JobExecuteResult
+			jobLock *JobLock
 		)
 
 		result = &common.JobExecuteResult{
@@ -29,14 +30,24 @@ func (executor *Executor) ExecuteJob(info *common.JobExecuteInfo) {
 			OutPut:         make([]byte, 0),
 		}
 
-		result.StartTime = time.Now()
-		//执行shell脚本
-		cmd = exec.CommandContext(context.TODO(), "/bin/bash", "-c", info.Job.Command)
-		output, err = cmd.CombinedOutput()
+		jobLock = G_jobMgr.CreateJobLock(info.Job.Name)
+		err = jobLock.TryLock()
+		defer jobLock.UnLock()
 
-		result.EndTime = time.Now()
-		result.OutPut = output
-		result.Err = err
+		if jobLock.IsLockSuccess { //获取锁成功
+
+			result.StartTime = time.Now()
+			//执行shell脚本
+			cmd = exec.CommandContext(context.TODO(), "/bin/bash", "-c", info.Job.Command)
+			output, err = cmd.CombinedOutput()
+
+			result.EndTime = time.Now()
+			result.OutPut = output
+			result.Err = err
+		} else {
+			result.Err = err
+		}
+
 		G_scheduler.PushJobExecuteResult(result)
 	}()
 }
